@@ -2,10 +2,12 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const { graphqlHTTP } = require('express-graphql');
 const { buildSchema } = require('graphql');
+const mongoose = require('mongoose');
+const CONFIG = require('./config');
+
+const Event = require('./models/event')
 
 const app = express();
-
-const events = [];
 
 app.use(bodyParser.json());
 
@@ -41,22 +43,39 @@ app.use('/graphql', graphqlHTTP({
     `),
     rootValue: {
         events: () => {
-            return events;
+            return Event.find()
+            .then(events => {
+                return events.map(event => {
+                    return { ...event._doc, _id: event.id };
+                });
+            }).catch(err => {
+                throw err;
+            });
         },
-        createEvent: (args) => {
-            const event = {
-                _id: Math.random().toString(),
+        createEvent: args => {
+            const event = new Event({
                 title: args.eventInput.title,
                 description: args.eventInput.description,
                 price: +args.eventInput.price,
-                date: args.eventInput.date
-            }
-
-            events.push(event);
-            return event;
+                date: new Date(args.eventInput.date)
+            });
+            return event.save()
+            .then(result => {
+                console.log(result);
+                return { ...result._doc, _id: result._doc._id.toString() };
+            }).catch(err => {
+                console.log(err);
+                throw err;
+            });
         }
     },
     graphiql: true
 }));
 
-app.listen(3000);
+mongoose.connect(`mongodb+srv://${CONFIG.USERNAME}:${CONFIG.PASSWORD}@cluster0.yej4m.mongodb.net/${CONFIG.DB}?retryWrites=true&w=majority`)
+.then(() => {
+    app.listen(3000);
+})
+.catch(err => {
+    console.log(err);
+});
