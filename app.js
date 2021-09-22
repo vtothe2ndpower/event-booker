@@ -3,7 +3,7 @@ const bodyParser = require('body-parser');
 const { graphqlHTTP } = require('express-graphql');
 const mongoose = require('mongoose');
 
-const CONFIG = require('./config');
+const CONFIG = require('./config.js');
 const graphQlSchema = require('./graphql/schema/index');
 const graphQlResolvers = require('./graphql/resolvers/index');
 
@@ -20,7 +20,10 @@ app.use(
     })
 );
 
-mongoose.connect(`mongodb+srv://${CONFIG.USERNAME}:${CONFIG.PASSWORD}@cluster0.yej4m.mongodb.net/${CONFIG.DB}?retryWrites=true&w=majority`)
+mongoose.connect(`mongodb+srv://${CONFIG.USERNAME}:${CONFIG.PASSWORD}@cluster0.yej4m.mongodb.net/${CONFIG.DB}?retryWrites=true&w=majority`, { 
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+})
 .then(() => {
     app.listen(3000);
 })
